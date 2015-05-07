@@ -37,8 +37,8 @@ Usage
 -----
 
     usage: sslexpiry.py [-h] [-c FILENAME] [-d DAYS] [-t SECONDS] [-v]
-			[-f FILENAME]
-			[SERVER [SERVER ...]]
+                        [-f FILENAME]
+                        [SERVER [SERVER ...]]
 
     positional arguments:
       SERVER                Check the specified server.
@@ -46,16 +46,16 @@ Usage
     optional arguments:
       -h, --help            show this help message and exit
       -c FILENAME, --certs-file FILENAME
-			    The certificates file to use for verification
-			    (default=/etc/ssl/certs/ca-certificates.crt)
+                            The certificates file to use for verification
+                            (default=/etc/ssl/certs/ca-certificates.crt)
       -d DAYS, --days DAYS  The number of days at which to warn of expiry
-			    (default=30)
+                            (default=30)
       -t SECONDS, --timeout SECONDS
-			    The number of seconds to allow for server response
-			    (default=30)
+                            The number of seconds to allow for server response
+                            (default=30)
       -v, --verbose         Display verbose output.
       -f FILENAME, --from-file FILENAME
-			    Read the servers to check from the specified file.
+                            Read the servers to check from the specified file.
 
 Files containing lists of servers can contain blank lines, and any
 characters from a '#' onwards are ignored as comments.
