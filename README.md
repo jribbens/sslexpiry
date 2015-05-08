@@ -95,6 +95,16 @@ Example server list file
     othermail.example.com:2525/smtp # this server listens for smtp on port 2525
 
 
+Example output
+--------------
+
+    $ ./sslexpiry.py -vf example.conf
+    www.example.com                 Expiry date is 30 Jan 2016 and signature algorithm is RSA-SHA1
+    example.com                     The certificate is NOT trusted. The name in the certificate does not match the expected.
+    othermail.example.com:2525/smtp 03 Jul 2015
+    mail.example.com:smtp           10 Oct 2015
+
+
 Notes
 -----
 
