@@ -100,4 +100,7 @@ Notes
 
 The `smtp` or `imap` protocol negotiation is implemented in the script,
 because the version of `gnutls-cli` available on Ubuntu does not provide
-the `starttls-proto` option that has been added in later versions.
+the `starttls-proto` option that has been added in later versions. Similarly,
+the `gnutls-cli` program is used rather than the more common `openssl`
+program, because the version available on Ubuntu does not support the
+`verify_hostname` option.
