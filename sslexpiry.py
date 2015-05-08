@@ -205,7 +205,7 @@ def check_server(server, certs_file, days, timeout, verbose):
             expiry.strftime("%d %b %Y"), signature.decode("iso-8859-1"))
     now = datetime.datetime.now()
     if expiry <= now:
-        return "Certificated expired on {}!".format(expiry.strftime("%d %b %Y"))
+        return "Certificate expired on {}!".format(expiry.strftime("%d %b %Y"))
     remaining = expiry - now
     if remaining.days <= days:
         return "Expiry date is {} - {} day(s) from now".format(
