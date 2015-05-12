@@ -134,6 +134,10 @@ def check_server(server, certs_file, days, timeout, verbose):
     # pylint: disable=too-many-statements,too-many-locals
     if verbose >= 2:
         print(server + ":")
+    expiryonly = False
+    if server.startswith("!"):
+        server = server[1:]
+        expiryonly = True
     starttls = None
     if "/" in server:
         server, starttls = server.split("/", 1)
@@ -197,12 +201,6 @@ def check_server(server, certs_file, days, timeout, verbose):
     signature = match.group(1)
     if verbose >= 2:
         print("Signature: {}".format(signature.decode("iso-8859-1")))
-    if b"MD5" in signature:
-        return "Signature algorithm is {}".format(
-            signature.decode("iso-8859-1"))
-    elif b"SHA1" in signature and expiry >= datetime.datetime(2016, 1, 1):
-        return "Expiry date is {} and signature algorithm is {}".format(
-            expiry.strftime("%d %b %Y"), signature.decode("iso-8859-1"))
     now = datetime.datetime.now()
     if expiry <= now:
         return "Certificate expired on {}!".format(expiry.strftime("%d %b %Y"))
@@ -210,6 +208,14 @@ def check_server(server, certs_file, days, timeout, verbose):
     if remaining.days <= days:
         return "Expiry date is {} - {} day(s) from now".format(
             expiry.strftime("%d %b %Y"), remaining.days)
+    if expiryonly:
+        return expiry
+    if b"MD5" in signature:
+        return "Signature algorithm is {}".format(
+            signature.decode("iso-8859-1"))
+    elif b"SHA1" in signature and expiry >= datetime.datetime(2016, 1, 1):
+        return "Expiry date is {} and signature algorithm is {}".format(
+            expiry.strftime("%d %b %Y"), signature.decode("iso-8859-1"))
     return expiry
 
 

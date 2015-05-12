@@ -62,10 +62,12 @@ characters from a '#' onwards are ignored as comments.
 
 Servers specified in the files or on the command line are of the form:
 
-    hostname[:port][/protocol]
+    [!]hostname[:port][/protocol]
 
 `port` can be a number or a standard service name (e.g. 'https'). If it
-is omitted then 'https' is assumed.
+is omitted then 'https' is assumed. If the hostname is prefixed with
+`!` then only that server's certificate's imminent expiry will cause
+a problem to be reported, not weak signature algorithms.
 
 `protocol` specifies a protocol that should be followed before the SSL
 negotiation begins. Valid values include `smtp`, `imap` or `none`. If
