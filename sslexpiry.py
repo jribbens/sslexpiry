@@ -109,20 +109,20 @@ def do_starttls(gnutls, protocol, verbose):
         if not data.startswith(b"* CAPABILITY"):
             raise StartTLSError(
                 "Unexpected IMAP CAPABILITY response: {!r}".format(
-                data.decode("iso-8859-1")))
+                    data.decode("iso-8859-1")))
         if b"STARTTLS" not in data:
             raise StartTLSError("IMAP server does not support STARTTLS")
         data = starttls_readline(gnutls, verbose)
         if not data.startswith(b"a OK"):
             raise StartTLSError(
                 "Unexpected IMAP CAPABILITY response: {!r}".format(
-                data.decode("iso-8859-1")))
+                    data.decode("iso-8859-1")))
         starttls_write(gnutls, b"a STARTTLS\r\n", verbose)
         data = starttls_readline(gnutls, verbose)
         if not data.startswith(b"a OK"):
             raise StartTLSError(
                 "Unexpected IMAP STARTTLS response: {!r}".format(
-                data.decode("iso-8859-1")))
+                    data.decode("iso-8859-1")))
     else:
         raise StartTLSError("Unknown STARTTLS protocol {!r}".format(protocol))
 
@@ -153,14 +153,23 @@ def check_server(server, certs_file, days, timeout, verbose):
         starttls = {25: "smtp", 143: "imap", 587: "smtp"}.get(int(port))
     if starttls in ("none", "http", "https"):
         starttls = None
-    args = ["gnutls-cli", "-V", "--x509cafile", certs_file, "-p", port, server]
+    args = [
+        "gnutls-cli",
+        "-V",
+        "--x509cafile",
+        certs_file,
+        "-p",
+        port,
+        server
+    ]
     if starttls:
         args.insert(-1, "--starttls")
     try:
         if verbose >= 3:
             print("exec:", args)
-        gnutls = subprocess.Popen(args, stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        gnutls = subprocess.Popen(
+            args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
         if starttls:
             prevalarm = signal.signal(signal.SIGALRM, alarm_handler)
             try:
@@ -193,8 +202,10 @@ def check_server(server, certs_file, days, timeout, verbose):
     dates = _RE_EXPIRY.findall(out)
     if not dates:
         return "Unable to determine expiry date"
-    expiry = min(datetime.datetime.strptime(datestring.decode("ascii"),
-        "%a %b %d %H:%M:%S UTC %Y") for datestring in dates)
+    expiry = min(
+        datetime.datetime.strptime(
+            datestring.decode("ascii"), "%a %b %d %H:%M:%S UTC %Y")
+        for datestring in dates)
     match = _RE_SIGNATURE.search(out)
     if not match:
         return "Unable to determine signature algorithm"
@@ -203,7 +214,8 @@ def check_server(server, certs_file, days, timeout, verbose):
         print("Signature: {}".format(signature.decode("iso-8859-1")))
     now = datetime.datetime.now()
     if expiry <= now:
-        return "Certificate expired on {}!".format(expiry.strftime("%d %b %Y"))
+        return "Certificate expired on {}!".format(
+            expiry.strftime("%d %b %Y"))
     remaining = expiry - now
     if remaining.days <= days:
         return "Expiry date is {} - {} day(s) from now".format(
@@ -223,23 +235,29 @@ def main():
     """Parse command-line arguments and check appropriately."""
     # pylint: disable=too-many-branches
     parser = argparse.ArgumentParser(description="SSL expiry checker")
-    parser.add_argument("-c", "--certs-file", metavar="FILENAME",
+    parser.add_argument(
+        "-c", "--certs-file", metavar="FILENAME",
         default=CERTS_FILE,
         help="The certificates file to use for verification"
         " (default={})".format(CERTS_FILE))
-    parser.add_argument("-d", "--days", metavar="DAYS", type=int, default=30,
+    parser.add_argument(
+        "-d", "--days", metavar="DAYS", type=int, default=30,
         help="The number of days at which to warn of expiry"
         " (default=30)")
-    parser.add_argument("-t", "--timeout", metavar="SECONDS", type=int,
+    parser.add_argument(
+        "-t", "--timeout", metavar="SECONDS", type=int,
         default=30,
         help="The number of seconds to allow for server response"
         " (default=30)")
-    parser.add_argument("-v", "--verbose", action="count", default=0,
+    parser.add_argument(
+        "-v", "--verbose", action="count", default=0,
         help="Display verbose output.")
-    parser.add_argument("-f", "--from-file", metavar="FILENAME",
+    parser.add_argument(
+        "-f", "--from-file", metavar="FILENAME",
         type=argparse.FileType("rb"), action="append",
         help="Read the servers to check from the specified file.")
-    parser.add_argument("servers", nargs="*", metavar="SERVER", default=(),
+    parser.add_argument(
+        "servers", nargs="*", metavar="SERVER", default=(),
         help="Check the specified server.")
     args = parser.parse_args()
     results = []
@@ -250,12 +268,18 @@ def main():
                     line = line.split(b"#", 1)[0]
                 line = line.strip().decode("utf8")
                 if line:
-                    results.append((line, check_server(line, args.certs_file,
-                        args.days, args.timeout, args.verbose)))
+                    results.append((
+                        line,
+                        check_server(line, args.certs_file, args.days,
+                                     args.timeout, args.verbose)
+                    ))
     if args.servers:
         for server in args.servers:
-            results.append((server, check_server(server, args.certs_file,
-                args.days, args.timeout, args.verbose)))
+            results.append((
+                server,
+                check_server(server, args.certs_file, args.days, args.timeout,
+                             args.verbose)
+            ))
     exitcode = os.EX_OK
     if not results:
         sys.exit(exitcode)
@@ -265,15 +289,16 @@ def main():
         if isinstance(result, datetime.datetime):
             expiries.append((result, server))
         else:
-            print("{}{} {}".format(server, " " * (longest - len(server)),
-                result))
+            print("{}{} {}".format(
+                server, " " * (longest - len(server)), result))
             exitcode = os.EX_IOERR
     if args.verbose >= 1:
         expiries.sort()
         for result, server in expiries:
             if isinstance(result, datetime.datetime):
                 if args.verbose >= 1:
-                    print("{}{} {}".format(server,
+                    print("{}{} {}".format(
+                        server,
                         " " * (longest - len(server)),
                         result.strftime("%d %b %Y")))
     sys.exit(exitcode)
