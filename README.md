@@ -26,9 +26,9 @@ of 2016 and later, hence this check.)
 Requirements
 ------------
 
-The script relies upon Python 3 (it has only been tested under Python 3.4),
-and `gnutls-cli` (it has been tested with 3.2.16). You can install these on
-Ubuntu 14.04 and later with:
+The script relies upon Python 3 (it has been tested under Python 3.4 and 3.6),
+and `gnutls-cli` (it has been tested with 3.2.16 and 3.5.8). You can install
+these on Ubuntu 14.04 and later with:
 
     sudo apt-get install python3 gnutls-bin
 
@@ -111,8 +111,8 @@ Notes
 -----
 
 The `smtp` or `imap` protocol negotiation is implemented in the script,
-because the version of `gnutls-cli` available on Ubuntu does not provide
+because the version of `gnutls-cli` available on Ubuntu 14.04 does not provide
 the `starttls-proto` option that has been added in later versions. Similarly,
 the `gnutls-cli` program is used rather than the more common `openssl`
-program, because the version available on Ubuntu does not support the
+program, because the version available on Ubuntu 14.04 does not support the
 `verify_hostname` option.
