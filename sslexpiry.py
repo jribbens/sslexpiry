@@ -220,11 +220,8 @@ def check_server(server, certs_file, days, timeout, verbose):
             "" if remaining.days == 1 else "s")
     if expiryonly:
         return expiry
-    if "MD5" in signature:
-        return "Signature algorithm is {}".format(signature)
-    elif "SHA1" in signature and expiry >= datetime.datetime(2016, 1, 1):
-        return "Expiry date is {} and signature algorithm is {}".format(
-            expiry.strftime("%d %b %Y"), signature)
+    if "MD5" in signature or "SHA1" in signature:
+        return "Signature algorithm is bad: {}".format(signature)
     return expiry
 
 
