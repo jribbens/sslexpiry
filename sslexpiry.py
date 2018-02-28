@@ -14,14 +14,14 @@ import sys
 
 CERTS_FILE = "/etc/ssl/certs/ca-certificates.crt"
 
-_RE_STATUS = re.compile(br"^- Status: (.*)", re.MULTILINE)
+_RE_STATUS = re.compile(r"^- Status: (.*)", re.MULTILINE)
 _RE_EXPIRY = re.compile(
-    br"^\s+Not After: ([a-z]{3} [a-z]{3} \d{2}"
-    br" \d{2}:\d{2}:\d{2} UTC \d{4})\s*$",
+    r"^\s+Not After: ([a-z]{3} [a-z]{3} \d{2}"
+    r" \d{2}:\d{2}:\d{2} UTC \d{4})\s*$",
     re.MULTILINE | re.IGNORECASE)
-_RE_SIGNATURE = re.compile(br"^\s+Signature Algorithm: (.*)", re.MULTILINE)
-_RE_RECEIVED = re.compile(br"^- Received\[(\d+)\]: ")
-_RE_SENT = re.compile(br"^- Sent: (\d+) bytes$")
+_RE_SIGNATURE = re.compile(r"^\s+Signature Algorithm: (.*)", re.MULTILINE)
+_RE_RECEIVED = re.compile(r"^- Received\[(\d+)\]: ")
+_RE_SENT = re.compile(r"^- Sent: (\d+) bytes$")
 
 
 class StartTLSError(Exception):
@@ -69,60 +69,57 @@ def do_starttls(gnutls, protocol, verbose):
             return
         if verbose >= 3:
             print("Read: {!r}".format(line))
-        if line == b"- Simple Client Mode:\n":
+        if line == "- Simple Client Mode:\n":
             gnutls.stdout.readline()
             break
     if protocol == "smtp":
         data = starttls_readline(gnutls, verbose)
-        if not data.startswith(b"220 "):
-            raise StartTLSError("Unexpected SMTP greeting: {!r}".format(
-                data.decode("iso-8859-1")))
-        starttls_write(gnutls, b"EHLO mail.example.com\n", verbose)
+        if not data.startswith("220 "):
+            raise StartTLSError(
+                "Unexpected SMTP greeting: {!r}".format(data))
+        starttls_write(gnutls, "EHLO mail.example.com\n", verbose)
         data = starttls_readline(gnutls, verbose)
         found = False
-        if not data.startswith(b"250-"):
-            raise StartTLSError("Unexpected EHLO response: {!r}".format(
-                data.decode("iso-8859-1")))
-        while data.startswith(b"250-"):
-            if b"STARTTLS" in data:
+        if not data.startswith("250-"):
+            raise StartTLSError(
+                "Unexpected EHLO response: {!r}".format(data))
+        while data.startswith("250-"):
+            if "STARTTLS" in data:
                 found = True
             data = starttls_readline(gnutls, verbose)
-        if not data.startswith(b"250 "):
-            raise StartTLSError("Unexpected EHLO response: {!r}".format(
-                data.decode("iso-8859-1")))
-        if b"STARTTLS" in data:
+        if not data.startswith("250 "):
+            raise StartTLSError(
+                "Unexpected EHLO response: {!r}".format(data))
+        if "STARTTLS" in data:
             found = True
         if not found:
             raise StartTLSError("SMTP server does not support STARTTLS")
-        starttls_write(gnutls, b"STARTTLS\n", verbose)
+        starttls_write(gnutls, "STARTTLS\n", verbose)
         data = starttls_readline(gnutls, verbose)
-        if not data.startswith(b"220 "):
-            raise StartTLSError("Unexpected STARTTLS response: {!r}".format(
-                data.decode("iso-8859-1")))
+        if not data.startswith("220 "):
+            raise StartTLSError(
+                "Unexpected STARTTLS response: {!r}".format(data))
     elif protocol == "imap":
         data = starttls_readline(gnutls, verbose)
-        if not data.startswith(b"* OK"):
-            raise StartTLSError("Unexpected IMAP greeting: {!r}".format(
-                data.decode("iso-8859-1")))
-        starttls_write(gnutls, b"a CAPABILITY\r\n", verbose)
-        data = starttls_readline(gnutls, verbose)
-        if not data.startswith(b"* CAPABILITY"):
+        if not data.startswith("* OK"):
             raise StartTLSError(
-                "Unexpected IMAP CAPABILITY response: {!r}".format(
-                    data.decode("iso-8859-1")))
-        if b"STARTTLS" not in data:
+                "Unexpected IMAP greeting: {!r}".format(data))
+        starttls_write(gnutls, "a CAPABILITY\r\n", verbose)
+        data = starttls_readline(gnutls, verbose)
+        if not data.startswith("* CAPABILITY"):
+            raise StartTLSError(
+                "Unexpected IMAP CAPABILITY response: {!r}".format(data))
+        if "STARTTLS" not in data:
             raise StartTLSError("IMAP server does not support STARTTLS")
         data = starttls_readline(gnutls, verbose)
-        if not data.startswith(b"a OK"):
+        if not data.startswith("a OK"):
             raise StartTLSError(
-                "Unexpected IMAP CAPABILITY response: {!r}".format(
-                    data.decode("iso-8859-1")))
-        starttls_write(gnutls, b"a STARTTLS\r\n", verbose)
+                "Unexpected IMAP CAPABILITY response: {!r}".format(data))
+        starttls_write(gnutls, "a STARTTLS\r\n", verbose)
         data = starttls_readline(gnutls, verbose)
-        if not data.startswith(b"a OK"):
+        if not data.startswith("a OK"):
             raise StartTLSError(
-                "Unexpected IMAP STARTTLS response: {!r}".format(
-                    data.decode("iso-8859-1")))
+                "Unexpected IMAP STARTTLS response: {!r}".format(data))
     else:
         raise StartTLSError("Unknown STARTTLS protocol {!r}".format(protocol))
 
@@ -169,7 +166,7 @@ def check_server(server, certs_file, days, timeout, verbose):
             print("exec:", args)
         gnutls = subprocess.Popen(
             args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE, encoding="iso-8859-1")
         if starttls:
             prevalarm = signal.signal(signal.SIGALRM, alarm_handler)
             try:
@@ -190,28 +187,28 @@ def check_server(server, certs_file, days, timeout, verbose):
         gnutls.communicate()
         return "Timed out"
     if verbose >= 2 and out:
-        print("\nSTDOUT:\n", out.decode("iso-8859-1"))
+        print("\nSTDOUT:\n", out)
     if verbose >= 2 and err:
-        print("\nSTDERR:\n", err.decode("iso-8859-1"))
+        print("\nSTDERR:\n", err)
     match = _RE_STATUS.search(out)
     if match:
-        if match.group(1).strip() != b"The certificate is trusted.":
-            return match.group(1).decode("iso-8859-1")
+        if match.group(1).strip() != "The certificate is trusted.":
+            return match.group(1)
     else:
-        return err.strip().split(b"\n")[-1].decode("iso-8859-1")
+        return err.strip().split("\n")[-1]
     dates = _RE_EXPIRY.findall(out)
     if not dates:
         return "Unable to determine expiry date"
     expiry = min(
-        datetime.datetime.strptime(
-            datestring.decode("ascii"), "%a %b %d %H:%M:%S UTC %Y")
-        for datestring in dates)
+        datetime.datetime.strptime(datestring, "%a %b %d %H:%M:%S UTC %Y")
+        for datestring in dates
+    )
     match = _RE_SIGNATURE.search(out)
     if not match:
         return "Unable to determine signature algorithm"
     signature = match.group(1)
     if verbose >= 2:
-        print("Signature: {}".format(signature.decode("iso-8859-1")))
+        print("Signature: {}".format(signature))
     now = datetime.datetime.now()
     if expiry <= now:
         return "Certificate expired on {}!".format(
@@ -223,12 +220,11 @@ def check_server(server, certs_file, days, timeout, verbose):
             "" if remaining.days == 1 else "s")
     if expiryonly:
         return expiry
-    if b"MD5" in signature:
-        return "Signature algorithm is {}".format(
-            signature.decode("iso-8859-1"))
-    elif b"SHA1" in signature and expiry >= datetime.datetime(2016, 1, 1):
+    if "MD5" in signature:
+        return "Signature algorithm is {}".format(signature)
+    elif "SHA1" in signature and expiry >= datetime.datetime(2016, 1, 1):
         return "Expiry date is {} and signature algorithm is {}".format(
-            expiry.strftime("%d %b %Y"), signature.decode("iso-8859-1"))
+            expiry.strftime("%d %b %Y"), signature)
     return expiry
 
 
@@ -255,7 +251,7 @@ def main():
         help="Display verbose output.")
     parser.add_argument(
         "-f", "--from-file", metavar="FILENAME",
-        type=argparse.FileType("rb"), action="append",
+        type=argparse.FileType("r", encoding="utf-8"), action="append",
         help="Read the servers to check from the specified file.")
     parser.add_argument(
         "servers", nargs="*", metavar="SERVER", default=(),
@@ -265,9 +261,9 @@ def main():
     if args.from_file:
         for stream in args.from_file:
             for line in stream:
-                if b"#" in line:
-                    line = line.split(b"#", 1)[0]
-                line = line.strip().decode("utf8")
+                if "#" in line:
+                    line = line.split("#", 1)[0]
+                line = line.strip()
                 if line:
                     results.append((
                         line,
