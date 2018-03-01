@@ -10,9 +10,12 @@ thereof. It will warn you if:
   * the SSL certificate does not verify,
   * the SSL certificate does not match the server hostname,
   * the server does not support SSL,
-  * the certificate uses MD5,
-  * the certificate uses SHA1 and its expiry is in 2016 or later,
+  * the certificate uses MD5 or SHA1,
   * the certificate has expired,
+  * the certificate was issued on 1st March 2018 or later
+    and is valid for over [825 days](https://cabforum.org/2017/03/17/ballot-193-825-day-certificate-lifetimes/),
+  * the certificate was issued by Symantec, Thawte, RapidSSL or Geotrust
+    and the [Chrome distrust date](https://security.googleblog.com/2017/09/chromes-plan-to-distrust-symantec.html) is soon,
   * or the certificate will expire soon.
 
 The intended use is that you will put the list of your servers using

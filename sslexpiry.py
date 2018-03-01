@@ -14,9 +14,17 @@ import sys
 
 CERTS_FILE = "/etc/ssl/certs/ca-certificates.crt"
 
+_RE_ENDCERT = re.compile(r"^-+END CERTIFICATE-+\s*$", re.MULTILINE)
+_RE_BADISSUERS = re.compile(
+    r"symantec|thawte|rapidssl|geotrust", re.IGNORECASE)
+_RE_ISSUER_CN = re.compile(r"^\s+Issuer:\s+CN=([^,]+)", re.MULTILINE)
 _RE_STATUS = re.compile(r"^- Status: (.*)", re.MULTILINE)
 _RE_EXPIRY = re.compile(
     r"^\s+Not After: ([a-z]{3} [a-z]{3} \d{2}"
+    r" \d{2}:\d{2}:\d{2} UTC \d{4})\s*$",
+    re.MULTILINE | re.IGNORECASE)
+_RE_STARTDATE = re.compile(
+    r"^\s+Not Before: ([a-z]{3} [a-z]{3} \d{2}"
     r" \d{2}:\d{2}:\d{2} UTC \d{4})\s*$",
     re.MULTILINE | re.IGNORECASE)
 _RE_SIGNATURE = re.compile(r"^\s+Signature Algorithm: (.*)", re.MULTILINE)
@@ -195,15 +203,17 @@ def check_server(server, certs_file, days, timeout, verbose):
         if match.group(1).strip() != "The certificate is trusted.":
             return match.group(1)
     else:
-        return err.strip().split("\n")[-1]
-    dates = _RE_EXPIRY.findall(out)
-    if not dates:
+        return err.strip().split("\n")[-1] or "Couldn't understand output"
+    match = _RE_ENDCERT.search(out)
+    if not match:
+        return err.strip().split("\n")[-1] or "Couldn't understand output"
+    certinfo = out[:match.end()]
+    match = _RE_EXPIRY.search(certinfo)
+    if not match:
         return "Unable to determine expiry date"
-    expiry = min(
-        datetime.datetime.strptime(datestring, "%a %b %d %H:%M:%S UTC %Y")
-        for datestring in dates
-    )
-    match = _RE_SIGNATURE.search(out)
+    expiry = datetime.datetime.strptime(
+        match.group(1), "%a %b %d %H:%M:%S UTC %Y")
+    match = _RE_SIGNATURE.search(certinfo)
     if not match:
         return "Unable to determine signature algorithm"
     signature = match.group(1)
@@ -215,13 +225,42 @@ def check_server(server, certs_file, days, timeout, verbose):
             expiry.strftime("%d %b %Y"))
     remaining = expiry - now
     if remaining.days <= days:
-        return "Expiry date is {} - {} day{} from now".format(
+        return "Expiry date is {} - {} day{}".format(
             expiry.strftime("%d %b %Y"), remaining.days,
             "" if remaining.days == 1 else "s")
     if expiryonly:
         return expiry
     if "MD5" in signature or "SHA1" in signature:
         return "Signature algorithm is bad: {}".format(signature)
+    match = _RE_STARTDATE.search(certinfo)
+    if not match:
+        return "Unable to determine start date"
+    startdate = datetime.datetime.strptime(
+        match.group(1), "%a %b %d %H:%M:%S UTC %Y")
+    lifetime = (expiry - startdate).days
+    if verbose >= 2:
+        print("Start date: {}".format(startdate.strftime("%d %b %Y")))
+        print("Lifetime: {} days".format(lifetime))
+    if startdate >= datetime.datetime(2018, 3, 1) and lifetime > 825:
+        return "Certificate lifetime of {} days is too long".format(lifetime)
+    match = _RE_ISSUER_CN.search(certinfo)
+    if not match:
+        return "Unable to determine certificate issuer"
+    issuer_cn = match.group(1)
+    if verbose >= 2:
+        print("Issuer: {}".format(issuer_cn))
+    if _RE_BADISSUERS.search(issuer_cn):
+        if verbose >= 2:
+            print("Distrusted issuer")
+        if startdate < datetime.datetime(2016, 6, 1):
+            distrustdate = datetime.datetime(2018, 3, 15)
+        else:
+            distrustdate = datetime.datetime(2018, 9, 13)
+        remaining = distrustdate - now
+        if remaining.days <= days:
+            return "Chrome will distrust on {} - {} day{}".format(
+                distrustdate.strftime("%d %b %Y"), remaining.days,
+                "" if remaining.days == 1 else "s")
     return expiry
 
 
