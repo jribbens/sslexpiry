@@ -182,7 +182,7 @@ def check_server(server, certs_file, days, timeout, verbose):
                 do_starttls(gnutls, starttls, verbose)
             finally:
                 signal.alarm(0)
-                prevalarm = signal.signal(signal.SIGALRM, prevalarm)
+                signal.signal(signal.SIGALRM, prevalarm)
         # pylint: disable=unexpected-keyword-arg
         out, err = gnutls.communicate(timeout=timeout)
         # pylint: enable=unexpected-keyword-arg
