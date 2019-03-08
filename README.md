@@ -59,6 +59,7 @@ Usage
       -v, --verbose         Display verbose output.
       -f FILENAME, --from-file FILENAME
                             Read the servers to check from the specified file.
+      -z, --exit-zero       Always return a process exit code of zero.
 
 Files containing lists of servers can contain blank lines, and any
 characters from a '#' onwards are ignored as comments.
@@ -86,7 +87,9 @@ If it is specified more than once then an annoyingly large amount of
 detailed debug output will be produced.
 
 The process exit code will be zero if no problems were found, and
-non-zero otherwise.
+non-zero otherwise, unless the `--exit-zero` option was specified,
+in which case the exit code will be zero unless there was an
+unexpected error.
 
 
 Example server list file

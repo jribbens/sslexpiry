@@ -34,7 +34,6 @@ _RE_SENT = re.compile(r"^- Sent: (\d+) bytes$")
 
 class StartTLSError(Exception):
     """Exception to indicate error occurred during STARTTLS handling."""
-    pass
 
 
 def alarm_handler(signum, frame):
@@ -290,6 +289,9 @@ def main():
         type=argparse.FileType("r", encoding="utf-8"), action="append",
         help="Read the servers to check from the specified file.")
     parser.add_argument(
+        "-z", "--exit-zero", action="store_true",
+        help="Always return a process exit code of zero.")
+    parser.add_argument(
         "servers", nargs="*", metavar="SERVER", default=(),
         help="Check the specified server.")
     args = parser.parse_args()
@@ -324,7 +326,8 @@ def main():
         else:
             print("{}{} {}".format(
                 server, " " * (longest - len(server)), result))
-            exitcode = os.EX_IOERR
+            if not args.exit_zero:
+                exitcode = os.EX_IOERR
     if args.verbose >= 1:
         expiries.sort()
         for result, server in expiries:
